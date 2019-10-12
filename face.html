@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Face Detection</title>
+    <style>
+      #preview {
+        width: 200px;
+        height: 200px;
+        border: 1px solid #cbcbcb;
+        margin-bottom: 20px;
+      }
+      #preview img {
+        width: 200px;
+        height: 200px;
+      }
+      .error {
+        color: red;
+        font-weight: 700;
+      }
+      h2 {
+        font-size: 24px;
+        font-weight: 500;
+        border-bottom: 1px solid #aaa;
+        text-transform: uppercase;
+      }
+      p {
+        font-size: 16px;
+      }
+      input {
+        margin-bottom: 20px;
+      }
+    </style>
+    <script src="face-api.min.js"></script>
+  </head>
+  <body>
+    <h2>Detect faces</h2>
+
+    <p>Upload an image</p>
+    <form>
+      <div id="preview"></div>
+      <input type="file" name="passport" id="passport" required />
+      <div>
+        <button>Submit</button>
+      </div>
+      <div id="message"></div>
+    </form>
+
+    <script>
+      const passportInput = document.getElementById("passport");
+      const message = document.getElementById("message");
+
+      // get the image on change
+
+      passportInput.addEventListener("change", handleFileChange);
+      function handleFileChange(e) {
+        const file = passportInput.files[0];
+        // read file data
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function(e) {
+          const image = new Image();
+          image.src = e.target.result;
+          image.onload = function() {
+            // pass image to face detector
+            detectFace(image);
+          };
+        };
+      }
+
+      async function detectFace(image) {
+        message.innerHTML = "Detecting... Running AI...";
+        console.log({ image });
+        document.getElementById(
+          "preview"
+        ).innerHTML = `<img id="previewImg" src="${image.src}" />`;
+        // detect faces in image
+        await faceapi.nets.tinyFaceDetector.loadFromUri("/faces/weights");
+        const detections = await faceapi.detectAllFaces(
+          image,
+          new faceapi.TinyFaceDetectorOptions()
+        );
+        console.log({ detections });
+        // check if no face is present
+        if (detections.length === 0) {
+          // inform user no face was detected
+          message.innerHTML = "<p class='error'>No face detected.</p>";
+        }
+        // check if one face is present
+        if (detections.length === 1) {
+          // inform user just one face was detected
+          message.innerHTML = "<p class='success'>A face was detected.</p>";
+        }
+        // check if no face is present
+        if (detections.length > 1) {
+          // inform user multiple faces were detected
+          message.innerHTML = "<p class='error'>Multiple faces detected.</p>";
+        }
+      }
+
+      console.log(faceapi.nets);
+    </script>
+  </body>
+</html>
